@@ -111,10 +111,13 @@ function calculateInvestmentReturn(investedHeight, colorMultiplier, investmentTy
             break;
     }
 
-    const calculatedReturn = baseReturn * riskMultiplier * randomFactor;
-    return Math.max(calculatedReturn, -investedHeight); // Ensuring that the return doesn't exceed the invested height negatively
-}
+    // Calculate the profit or loss
+    const profitOrLoss = baseReturn * riskMultiplier * randomFactor;
 
+    // Total return is the initial investment plus profit or loss
+    // Ensuring that the return doesn't exceed the invested height negatively
+    return Math.max(investedHeight + profitOrLoss, 0);
+}
 
 function processInvestments() {
     Object.keys(investmentClicks).forEach(type => {
@@ -286,13 +289,13 @@ function startWeatherTimer() {
     }
     weatherTimer = setTimeout(() => {
         triggerRandomWeather();
-    }, 90000); // Trigger weather event every 90 seconds
+    }, 60000); // Trigger weather event every 60 seconds
 }
 
 function triggerRandomWeather() {
     const weatherChance = Math.random();
-    if (weatherChance < 0.05) {
-        const weatherType = Math.floor(Math.random() * 3);
+    if (weatherChance < 0.25) { // Adjust this probability as needed
+        const weatherType = Math.floor(Math.random() * 4); // Assuming 4 types including Fog
         switch (weatherType) {
             case 0:
                 applyRainEffect();
@@ -303,10 +306,14 @@ function triggerRandomWeather() {
             case 2:
                 applyHeatEffect();
                 break;
+            case 3:
+                applyFogEffect();
+                break;
         }
     }
-    startWeatherTimer(); // Reset the timer
+    startWeatherTimer(); // Reset the timer for the next weather event
 }
+
 
 function applyRainEffect() {
     alert("Rain starts! Building speed halved.");
@@ -344,7 +351,27 @@ function applyHeatEffect() {
     }, 15000 + Math.random() * 15000);
 }
 
+function applyFogEffect() {
+    alert("Fog descends! All click history and debuffs are cleared.");
+
+    // Resetting click-related stats and debuffs
+    clickCount = 0;
+    clicksToIncrease = 1; // Assuming this is normally modified by clicks
+    // Reset other click-related debuffs or modifiers here
+
+    weatherEffect = "fog";
+
+    // Set the duration of the fog effect
+    setTimeout(() => {
+        weatherEffect = null;
+        alert("Fog lifts. Click history can now accumulate again.");
+    }, 30000); // 30 seconds duration, adjust as needed
+}
+
 startWeatherTimer();
+shortInvestButton.addEventListener("click", () => handleInvestment("short"));
+mediumInvestButton.addEventListener("click", () => handleInvestment("medium"));
+longInvestButton.addEventListener("click", () => handleInvestment("long"));
 shortInvestButton.addEventListener("click", () => handleInvestment("short"));
 mediumInvestButton.addEventListener("click", () => handleInvestment("medium"));
 longInvestButton.addEventListener("click", () => handleInvestment("long"));
