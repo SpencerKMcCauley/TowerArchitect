@@ -32,43 +32,100 @@ function handleInvestment(investmentType) {
 
     if (!investmentActive[investmentType]) {
         let heightDeductionPercentage;
-        investmentActive[investmentType] = true;
+        let heightToInvest;
 
-        switch (investmentType) {
-            case "short":
-                investmentClicks.short = 5; // Duration for short investment
-                investmentReturns.short = calculateInvestmentReturn(currentHeight, colorMultiplier, 1.5, 0.5);
-                heightDeductionPercentage = 0.10; // Deducts 10% of tower height for short investment
-                alert("Short-term investment started!");
-                break;
-            case "medium":
-                investmentClicks.medium = 10; // Duration for medium investment
-                investmentReturns.medium = calculateInvestmentReturn(currentHeight, colorMultiplier, 1.3, 0.7);
-                heightDeductionPercentage = 0.15; // Deducts 15% of tower height for medium investment
-                alert("Medium-term investment started!");
-                break;
-            case "long":
-                investmentClicks.long = 15; // Duration for long investment
-                investmentReturns.long = calculateInvestmentReturn(currentHeight, colorMultiplier, 1.1, 0.9);
-                heightDeductionPercentage = 0.20; // Deducts 20% of tower height for long investment
-                alert("Long-term investment started!");
-                break;
-            default:
-                alert("Invalid investment type.");
+        // If the tower height is at least 1,000, allow the player to choose the investment percentage
+        if (currentHeight >= 1000) {
+            const investmentPercentage = parseFloat(prompt("Enter the percentage of the tower to invest:"));
+            if (isNaN(investmentPercentage) || investmentPercentage <= 0 || investmentPercentage > 100) {
+                alert("Invalid investment percentage. Please enter a value between 0 and 100.");
                 return;
+            }
+            heightToInvest = (currentHeight * investmentPercentage) / 100;
+        } else {
+            // Default investment percentages for tower height below 1,000
+            switch (investmentType) {
+                case "short":
+                    heightDeductionPercentage = 0.20; // 20% for short investment
+                    break;
+                case "medium":
+                    heightDeductionPercentage = 0.30; // 30% for medium investment
+                    break;
+                case "long":
+                    heightDeductionPercentage = 0.40; // 40% for long investment
+                    break;
+            }
+            heightToInvest = currentHeight * heightDeductionPercentage;
         }
 
-        // Deduct a percentage of the current tower height as an investment
-        const deductedHeight = Math.max(Math.floor(currentHeight * (1 - heightDeductionPercentage)), 1);
-        adjustTowerHeight(deductedHeight);
+        // Apply trader's fee (3% of the current height) and set investment returns
+        const traderFee = currentHeight * 0.03;
+        investmentActive[investmentType] = true;
+        investmentClicks[investmentType] = determineInvestmentDuration(investmentType);
+        investmentReturns[investmentType] = calculateInvestmentReturn(heightToInvest, colorMultiplier, investmentType);
+
+        // Deduct the invested height and trader's fee from the tower
+        const newHeight = Math.max(currentHeight - heightToInvest - traderFee, 1);
+        adjustTowerHeight(newHeight);
+
+        alert(`${investmentType.charAt(0).toUpperCase() + investmentType.slice(1)}-term investment started.`);
     } else {
         alert("Investment type is already active.");
     }
 }
 
-function calculateInvestmentReturn(height, colorMultiplier, highRiskMultiplier, lowRiskMultiplier) {
-    const baseReturn = height * colorMultiplier;
-    return Math.random() > 0.5 ? baseReturn * highRiskMultiplier : baseReturn * lowRiskMultiplier;
+function determineInvestmentDuration(investmentType) {
+    switch (investmentType) {
+        case "short":
+            return 5;
+        case "medium":
+            return 10;
+        case "long":
+            return 15;
+        default:
+            return 0;
+    }
+}
+
+
+function calculateInvestmentReturn(investedHeight, colorMultiplier, investmentType) {
+    const baseReturn = investedHeight * colorMultiplier;
+    let riskMultiplier, randomFactor;
+
+    switch (investmentType) {
+        case "short":
+            riskMultiplier = 1.5;
+            randomFactor = Math.random() * 2 - 1; // Range: -1 to 1
+            break;
+        case "medium":
+            riskMultiplier = 1.3;
+            randomFactor = Math.random() * 1.5 - 0.5; // Range: -0.5 to 1
+            break;
+        case "long":
+            riskMultiplier = 1.1;
+            randomFactor = Math.random() * 1.2 - 0.2; // Range: -0.2 to 1
+            break;
+        default:
+            riskMultiplier = 1;
+            randomFactor = 0;
+            break;
+    }
+
+    const calculatedReturn = baseReturn * riskMultiplier * randomFactor;
+    return Math.max(calculatedReturn, -investedHeight); // Ensuring that the return doesn't exceed the invested height negatively
+}
+
+
+function processInvestments() {
+    Object.keys(investmentClicks).forEach(type => {
+        if (investmentActive[type]) {
+            investmentClicks[type]--;
+            if (investmentClicks[type] <= 0) {
+                concludeInvestment(type);
+                investmentActive[type] = false;
+            }
+        }
+    });
 }
 
 function concludeInvestment(type) {
@@ -154,11 +211,13 @@ buildButton.addEventListener("click", () => {
     clickCount++;
     if (weatherEffect === "rain" && getCurrentColor() !== 'blue') {
         clickCount++;
+    processInvestments();
     }
 
     if (clickCount % 100 === 0) clicksToIncrease *= 2;
     if (clickCount % clicksToIncrease === 0) addTowerSection();
     if (clickCount % 15 === 0) changeTowerColor();
+    processInvestments();
 });
 
 spinWheel.addEventListener("click", () => {
@@ -289,4 +348,3 @@ startWeatherTimer();
 shortInvestButton.addEventListener("click", () => handleInvestment("short"));
 mediumInvestButton.addEventListener("click", () => handleInvestment("medium"));
 longInvestButton.addEventListener("click", () => handleInvestment("long"));
-
