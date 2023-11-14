@@ -23,8 +23,79 @@ const bestHeightDisplay = document.getElementById("bestHeight");
 const shortInvestButton = document.getElementById("shortInvestButton");
 const mediumInvestButton = document.getElementById("mediumInvestButton");
 const longInvestButton = document.getElementById("longInvestButton");
+const autoSaveInterval = 500; // 0.5 seconds in milliseconds
+
+setInterval(autoSaveGame, autoSaveInterval);
 
 bestHeightDisplay.textContent = bestHeight;
+
+function autoSaveGame() {
+    // Basic game stats
+    localStorage.setItem("towerHeight", towerContainer.childElementCount.toString());
+    localStorage.setItem("currentColor", currentColor);
+    localStorage.setItem("clickCount", clickCount.toString());
+    localStorage.setItem("clicksToIncrease", clicksToIncrease.toString());
+    localStorage.setItem("bestHeight", bestHeight.toString());
+    localStorage.setItem("enhancedWheel", enhancedWheel.toString());
+    localStorage.setItem("favorableSpinChance", favorableSpinChance.toString());
+    localStorage.setItem("riskButtonUsed", riskButtonUsed.toString());
+
+    // Investment-related stats
+    localStorage.setItem("investmentClicks", JSON.stringify(investmentClicks));
+    localStorage.setItem("investmentActive", JSON.stringify(investmentActive));
+    localStorage.setItem("investmentReturns", JSON.stringify(investmentReturns));
+
+    // Weather effect
+    localStorage.setItem("weatherEffect", weatherEffect || "");
+
+    // Child Limestone Mine feature
+    localStorage.setItem("childLimestoneMineActive", childLimestoneMineActive.toString());
+    localStorage.setItem("childWorkers", childWorkers.toString());
+
+    console.log("Game auto-saved"); // Optional: for debugging purposes
+}
+
+function loadGame() {
+    // Load basic game stats and apply them
+    const savedTowerHeight = parseInt(localStorage.getItem("towerHeight")) || 0;
+    const savedCurrentColor = localStorage.getItem("currentColor") || 'blue';
+    const savedClickCount = parseInt(localStorage.getItem("clickCount")) || 0;
+    const savedClicksToIncrease = parseInt(localStorage.getItem("clicksToIncrease")) || 1;
+    const savedBestHeight = parseInt(localStorage.getItem("bestHeight")) || 0;
+    const savedEnhancedWheel = localStorage.getItem("enhancedWheel") === 'true';
+    const savedFavorableSpinChance = parseFloat(localStorage.getItem("favorableSpinChance")) || 0.25;
+    const savedRiskButtonUsed = localStorage.getItem("riskButtonUsed") === 'true';
+
+    // Apply basic stats
+    // Assuming your game logic functions to update the tower height and other elements are in place
+    adjustTowerHeight(savedTowerHeight); // This function should update the visual tower height
+    currentColor = savedCurrentColor;
+    clickCount = savedClickCount;
+    clicksToIncrease = savedClicksToIncrease;
+    bestHeight = savedBestHeight;
+    enhancedWheel = savedEnhancedWheel;
+    favorableSpinChance = savedFavorableSpinChance;
+    riskButtonUsed = savedRiskButtonUsed;
+
+    // Load and apply investment-related stats
+    investmentClicks = JSON.parse(localStorage.getItem("investmentClicks")) || { short: 0, medium: 0, long: 0 };
+    investmentActive = JSON.parse(localStorage.getItem("investmentActive")) || { short: false, medium: false, long: false };
+    investmentReturns = JSON.parse(localStorage.getItem("investmentReturns")) || { short: 0, medium: 0, long: 0 };
+
+    // Load and apply weather effect
+    weatherEffect = localStorage.getItem("weatherEffect") || null;
+    // Additional logic might be needed here to reapply the weather effect in the game
+
+    // Load and apply Child Limestone Mine feature stats
+    childLimestoneMineActive = localStorage.getItem("childLimestoneMineActive") === 'true';
+    childWorkers = parseInt(localStorage.getItem("childWorkers")) || 0;
+    // Additional UI updates or logic might be needed here to reflect the state of the Child Limestone Mine in the game
+}
+
+document.addEventListener('DOMContentLoaded', (event) => {
+    // Load the saved game state
+    loadGame();
+});
 
 function handleInvestment(investmentType) {
     const currentHeight = towerContainer.childElementCount;
@@ -369,9 +440,6 @@ function applyFogEffect() {
 }
 
 startWeatherTimer();
-shortInvestButton.addEventListener("click", () => handleInvestment("short"));
-mediumInvestButton.addEventListener("click", () => handleInvestment("medium"));
-longInvestButton.addEventListener("click", () => handleInvestment("long"));
 shortInvestButton.addEventListener("click", () => handleInvestment("short"));
 mediumInvestButton.addEventListener("click", () => handleInvestment("medium"));
 longInvestButton.addEventListener("click", () => handleInvestment("long"));
